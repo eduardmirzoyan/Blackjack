@@ -6,7 +6,7 @@ import cardsArray from '../helpers/cardsArray';
 const CardContainer = styled.div({
   padding: 20,
   display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
+  gridTemplateColumns: '1fr 1fr 1fr 1fr',
   gridRowGap: 30,
 });
 
