@@ -14,6 +14,19 @@ const WrapperDos = styled.div({
   borderRadius: '10vh',
 });
 
+const CardBackWrapper = styled.div`
+    color: red;
+    border: 10px solid white;
+    position: relative;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 10px;
+    width: 120px;
+    height: 200px;
+    -webkit-box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0); 
+    box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0);
+`
+
 const CardWrapper = styled.div`
     position: relative;
     border: 1px solid #ccc;
@@ -27,6 +40,10 @@ const CardWrapper = styled.div`
 const iconStyles = {
 };
 
+const redIconSyles = {
+  color: 'red',
+}
+
 const rankSyles = {
   fontSize: 25,
   margin: 0,
@@ -34,7 +51,13 @@ const rankSyles = {
 };
 
 const iconStylesBottom = {
-  float: 'right',
+  position: 'absolute',
+  bottom: 43,
+  right: 10,
+};
+
+const redIconStylesBottom = {
+  color: 'red',
   position: 'absolute',
   bottom: 43,
   right: 10,
@@ -59,15 +82,15 @@ const Card = (props) => {
       </p>
       
       {(suit === 'spades') && <GiSpades css={iconStyles} />}
-      {(suit === 'diamonds') && <GiDiamonds css={iconStyles} />}
-      {(suit === 'hearts') && <GiHearts css={iconStyles} />}
+      {(suit === 'diamonds') && <GiDiamonds css={redIconSyles} />}
+      {(suit === 'hearts') && <GiHearts css={redIconSyles} />}
       {(suit === 'clubs') && <GiClubs css={iconStyles} />}
 
       <br/>
 
       {(suit === 'spades') && <GiSpades css={iconStylesBottom} />}
-      {(suit === 'diamonds') && <GiDiamonds css={iconStylesBottom} />}
-      {(suit === 'hearts') && <GiHearts css={iconStylesBottom} />}
+      {(suit === 'diamonds') && <GiDiamonds css={redIconStylesBottom} />}
+      {(suit === 'hearts') && <GiHearts css={redIconStylesBottom} />}
       {(suit === 'clubs') && <GiClubs css={iconStylesBottom} />}
 
       <p css={rankSylesBottom}>
@@ -76,6 +99,14 @@ const Card = (props) => {
 
     </CardWrapper>
   );
+
+  function backSide() {
+    return (
+      <CardBackWrapper>
+        
+      </CardBackWrapper>
+    );
+  }
 };
 
 export default Card;
