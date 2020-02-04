@@ -4,6 +4,9 @@ import Routes from './Routes';
 import logo from './logo.svg';
 import './App.css';
 
+// Testing
+const text = document.createElement('Hello');
+
 function App() {
   return (
     <BrowserRouter>
