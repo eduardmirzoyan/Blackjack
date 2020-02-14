@@ -73,12 +73,27 @@ const rankSylesBottom = {
   width: 120,
 };
 
+const translateRank = (rank) => {
+  switch(rank) {
+    case 1:
+      return 'A';
+    case 11:
+      return 'J';
+    case 12:
+      return 'Q';
+    case 13:
+      return 'K';
+    default:
+      return rank;
+  }
+}
+
 const Card = (props) => {
   const { suit, rank } = props;
   return (
     <CardWrapper>
       <p css={rankSyles}>
-        {rank}
+        {translateRank(rank)}
       </p>
       
       {(suit === 'spades') && <GiSpades css={iconStyles} />}
@@ -94,11 +109,13 @@ const Card = (props) => {
       {(suit === 'clubs') && <GiClubs css={iconStylesBottom} />}
 
       <p css={rankSylesBottom}>
-        {rank}
+        {translateRank(rank)}
       </p>
 
     </CardWrapper>
   );
+
+
 
   function backSide() {
     return (
