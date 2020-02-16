@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import cardsArray from '../helpers/cardsArray';
 import { Link } from 'react-router-dom';
 
+/** @jsx jsx */
 import { css, cx } from 'emotion';
 /** @jsx jsx */
 import { jsx } from '@emotion/core';
@@ -42,6 +43,10 @@ const DealerSection = styled.div({
     display: 'block',
     alignItems: 'center',
     margin: '0 auto',
+    textAlign: 'center',
+    padding: 20,
+
+    minHeight: 275,
 });
 
 const PlayerSection = styled.div({
@@ -49,6 +54,10 @@ const PlayerSection = styled.div({
     display: 'block',
     alignItems: 'center',
     margin: '0 auto',
+    textAlign: 'center',
+    padding: 20,
+
+    minHeight: 275,
 });
 
 const ChipTracker = styled.div({
@@ -71,7 +80,7 @@ const Chip = styled.button( {
     (props) => ({borderColor: props.color})
 );
 
-const Bet = styled.div({
+const BetPool = styled.div({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     border: '5px solid black',
     borderRadius: '50%',
@@ -80,30 +89,63 @@ const Bet = styled.div({
     textAlign: 'center',
     fontSize: 30,
     lineHeight: '115px',
+
     display: 'inline-block',
-    verticalAlign: 'middle',
-    position: 'absolute',
-    top: 50,
-    left: 'calc(50% + 100px)',
+    // verticalAlign: 'middle',
+    // position: 'absolute',
+    // top: 50,
+    // left: 'calc(50% + 100px)',
 });
 
-
+const betStyle = {
+    textAlign: 'center',
+};
 
 const Table = (props) => {
+
+    let pTotal = 0;
+    let dTotal = 0;
+
+    function dealerTotal() {
+        props.dealerCards.map( (card) => ( dTotal += card.rank) )
+        return dTotal;
+    }
+
+    function playerTotal() {
+        props.playerCards.map( (card) => ( pTotal += card.rank) )
+        return pTotal;
+    }
 
     return (
         <TableFelt>
             <DealerSection>
-                <CardFrame/>
+                
+                {props.dealerCards.map((card, idx) => (
+                    <Card suit={card.suit} rank={card.rank} key={idx} />
+                ))}
+
+                <p>{dealerTotal()}</p>
             </DealerSection>
 
+            <div css={betStyle}>
+                <BetPool> 
+                    ${props.currentBet}
+                </BetPool>
+            </div>
+            
             <PlayerSection>
-                <CardFrame/>
-                <Bet> ${props.currentBet}</Bet>
+                
+                {props.playerCards.map( (card, idx) => (
+                    <Card suit={card.suit} rank={card.rank} key={idx} />
+                ))}
+
+                <p>{playerTotal()}</p>
             </PlayerSection>
 
             <ActionButton onClick={props.dealCards}>Deal</ActionButton>
+            <ActionButton onClick={props.stand}>Stand</ActionButton>
             <ActionButton onClick={props.resetBet}>Reset Bet</ActionButton>
+            <ActionButton onClick={props.clearTable}>Clear Table</ActionButton>
 
             <ChipTracker>
                 <Chip onClick={() => (props.raiseBet(1))} color={'gray'}>$1</Chip>
@@ -139,14 +181,31 @@ class Game extends Component {
 
     dealCards = () => {
         this.setState((prevState) => ({
-            currentPlayerCards: prevState.currentPlayerCards.concat('Value'),
+            currentPlayerCards: prevState.currentPlayerCards.concat(cardsArray[ Math.floor(Math.random() * 52 + 1 )] ),
         }));
     };
+
+    hit = () => {
+        // To be implemented...
+    }
+
+    stand = () => {
+        this.setState((prevState) => ({
+            currentDealerCards: prevState.currentDealerCards.concat(cardsArray[ Math.floor(Math.random() * 52 + 1 )] ),
+        }));
+    }
+
+    clearTable = () => {
+        this.setState({
+            currentPlayerCards: [],
+            currentDealerCards: [],
+        });
+    }
 
     render() {
         return (
             <div>
-                <Table dealCards={this.dealCards} currentBet={this.state.currentBet} resetBet={this.resetBet} raiseBet={this.raiseBet}/> 
+                <Table clearTable={this.clearTable} stand={this.stand} dealCards={this.dealCards} currentBet={this.state.currentBet} resetBet={this.resetBet} raiseBet={this.raiseBet} dealerCards={this.state.currentDealerCards} playerCards={this.state.currentPlayerCards} /> 
             </div>
         );
     }
