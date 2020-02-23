@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import styled from '@emotion/styled';
 import Card from '../components/Card';
 import CardBack from '../components/CardBack';
-import cardsArray from '../helpers/cardsArray';
+import Deck from '../helpers/Deck';
 import { Link } from 'react-router-dom';
 
 /** @jsx jsx */
@@ -104,17 +104,17 @@ const betStyle = {
 
 const Table = (props) => {
 
-    let pTotal = 0;
-    let dTotal = 0;
 
     function dealerTotal() {
-        props.dealerCards.map( (card) => ( dTotal += card.rank) )
-        return dTotal;
+        let total = 0;
+        props.dealerCards.map( (card) => ( total += card.rank) )
+        return total;
     }
 
     function playerTotal() {
-        props.playerCards.map( (card) => ( pTotal += card.rank) )
-        return pTotal;
+        let total = 0;
+        props.playerCards.map( (card) => ( total += card.rank) )
+        return total;
     }
 
     return (
@@ -122,11 +122,10 @@ const Table = (props) => {
             <DealerSection>
                 
                 {props.dealerCards.map((card, idx) => (
-                    //<Card suit={card.suit} rank={card.rank} key={idx} />
-                    <CardBack/>
+                    <Card suit={card.suit} rank={card.rank} revealed={(idx === 0) ? false : true} key={idx} />
                 ))}
 
-                <p style={{margin: 0}}>{dealerTotal()}</p>
+                <p style={{margin: 0}}>{ ((dealerTotal() > 21) ? 'BUST' : dealerTotal()) }</p>
             </DealerSection>
 
             <div css={betStyle}>
@@ -138,14 +137,15 @@ const Table = (props) => {
             <PlayerSection>
                 
                 {props.playerCards.map( (card, idx) => (
-                    <Card suit={card.suit} rank={card.rank} key={idx} />
+                    <Card suit={card.suit} rank={card.rank} revealed={true} key={idx} />
                 ))}
 
-                <p style={{margin: 0}}>{playerTotal()}</p>
+                <p style={{margin: 0}}>{ ((playerTotal() > 21) ? 'BUST' : playerTotal()) }</p>
             </PlayerSection>
 
             <ActionButton onClick={props.dealCards}>Deal</ActionButton>
-            <ActionButton onClick={props.stand}>Stand</ActionButton>
+            <ActionButton onClick={props.hit} disabled={(playerTotal() > 21 ? true : false )}>Hit</ActionButton>
+            <ActionButton onClick={props.stand} disabled={(dealerTotal() > 21 ? true : false )}>Stand</ActionButton>
             <ActionButton onClick={props.resetBet}>Reset Bet</ActionButton>
             <ActionButton onClick={props.clearTable}>Clear Table</ActionButton>
 
@@ -161,12 +161,16 @@ const Table = (props) => {
     );
 }
 
+
 class Game extends Component {
 
+    
     state = {
         currentBet: 0,
+        currentDeck: new Deck(),
         currentPlayerCards: [],
         currentDealerCards: [],
+        needsShuffle: false,
     };
 
     raiseBet = (value) => {
@@ -182,19 +186,22 @@ class Game extends Component {
     }
 
     dealCards = () => {
-        this.setState((prevState) => ({
-            currentPlayerCards: prevState.currentPlayerCards.concat(cardsArray[ Math.floor(Math.random() * 52 + 1 )] ),
-        }));
+        this.addCard('p', 2);
+        this.addCard('h', 2);
+
+        if(this.state.currentDeck.getSize() <= 10) {
+            this.setState({
+                currentDeck: new Deck(),
+            })
+        }
     };
 
     hit = () => {
-        // To be implemented...
+        this.addCard('p', 1);        
     }
 
     stand = () => {
-        this.setState((prevState) => ({
-            currentDealerCards: prevState.currentDealerCards.concat(cardsArray[ Math.floor(Math.random() * 52 + 1 )] ),
-        }));
+        this.addCard('h', 1);
     }
 
     clearTable = () => {
@@ -204,13 +211,32 @@ class Game extends Component {
         });
     }
 
+    addCard(user, amount) {
+        if(user === 'p') {
+            for (let i = 0; i < amount; i++) {
+                this.setState((prevState) => ({
+                   currentPlayerCards: prevState.currentPlayerCards.concat( prevState.currentDeck.getCard())
+                }));      
+            }
+        }
+        if(user === 'h'){
+            for (let i = 0; i < amount; i++) {
+                this.setState((prevState) => ({
+                    currentDealerCards: prevState.currentDealerCards.concat( prevState.currentDeck.getCard())
+                    }));  
+            }
+        }
+    }
+
     render() {
         return (
             <div>
-                <Table clearTable={this.clearTable} stand={this.stand} dealCards={this.dealCards} currentBet={this.state.currentBet} resetBet={this.resetBet} raiseBet={this.raiseBet} dealerCards={this.state.currentDealerCards} playerCards={this.state.currentPlayerCards} /> 
+                <Table clearTable={this.clearTable} hit={this.hit} stand={this.stand} dealCards={this.dealCards} currentBet={this.state.currentBet} resetBet={this.resetBet} raiseBet={this.raiseBet} dealerCards={this.state.currentDealerCards} playerCards={this.state.currentPlayerCards} /> 
             </div>
         );
     }
 }
+
+
 
 export default Game;
