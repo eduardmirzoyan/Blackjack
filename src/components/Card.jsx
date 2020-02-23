@@ -8,17 +8,19 @@ import {
 } from 'react-icons/gi';
 
 const CardWrapper = styled.div`
-    display: inline-block;
-
-    text-align: left;
-    position: relative;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 10px;
-    width: 120px;
-    height: 200px;
-    -webkit-box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0); 
-    box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0);
+  display: inline-block;
+  background-color: white;
+  margin: 10px;
+  
+  text-align: left;
+  position: relative;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 10px;
+  width: 120px;
+  height: 200px;
+  -webkit-box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0); 
+  box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0);
 `;
 const blackIcon = {
 };

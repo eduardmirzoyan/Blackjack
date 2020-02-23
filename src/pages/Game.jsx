@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import styled from '@emotion/styled';
 import Card from '../components/Card';
+import CardBack from '../components/CardBack';
 import cardsArray from '../helpers/cardsArray';
 import { Link } from 'react-router-dom';
 
@@ -46,7 +47,7 @@ const DealerSection = styled.div({
     textAlign: 'center',
     padding: 20,
 
-    minHeight: 275,
+    minHeight: 295,
 });
 
 const PlayerSection = styled.div({
@@ -57,7 +58,7 @@ const PlayerSection = styled.div({
     textAlign: 'center',
     padding: 20,
 
-    minHeight: 275,
+    minHeight: 295,
 });
 
 const ChipTracker = styled.div({
@@ -121,10 +122,11 @@ const Table = (props) => {
             <DealerSection>
                 
                 {props.dealerCards.map((card, idx) => (
-                    <Card suit={card.suit} rank={card.rank} key={idx} />
+                    //<Card suit={card.suit} rank={card.rank} key={idx} />
+                    <CardBack/>
                 ))}
 
-                <p>{dealerTotal()}</p>
+                <p style={{margin: 0}}>{dealerTotal()}</p>
             </DealerSection>
 
             <div css={betStyle}>
@@ -139,7 +141,7 @@ const Table = (props) => {
                     <Card suit={card.suit} rank={card.rank} key={idx} />
                 ))}
 
-                <p>{playerTotal()}</p>
+                <p style={{margin: 0}}>{playerTotal()}</p>
             </PlayerSection>
 
             <ActionButton onClick={props.dealCards}>Deal</ActionButton>
