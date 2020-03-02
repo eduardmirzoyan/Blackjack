@@ -101,10 +101,8 @@ const Card = (props) => {
   const { suit, rank, revealed } = props;
   
   return (
-
     
     <CardWrapper>
-      
       <CardBack revealed={!revealed} />
 
       <CardFront>

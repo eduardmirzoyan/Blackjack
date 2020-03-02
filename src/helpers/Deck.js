@@ -5,7 +5,7 @@ class Deck {
         this.deck = [];
         for (const suitIndex in suit) {
             for(const rankIndex in rank){
-                this.deck.push({rank: rank[rankIndex], suit: suit[suitIndex]});
+                this.deck.push({rank: rank[rankIndex], suit: suit[suitIndex], blackjackValue: ((rank[rankIndex] === 11 || rank[rankIndex] === 12 || rank[rankIndex] === 13) ? 10 : rank[rankIndex] ) });
             }
         }
     }   
