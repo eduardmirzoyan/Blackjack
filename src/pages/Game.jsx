@@ -109,6 +109,7 @@ const betStyle = {
 
 class Game extends Component {
     
+    // Winner, 0 if no winner, 1 if player wins, -1 if dealer wins
     state = {
         currentBet: 0,
         currentDeck: new Deck(),
@@ -119,6 +120,7 @@ class Game extends Component {
         playerTurn: true,
         playerBusted: false,
         dealerBusted: false,
+        winner: 0,
     };
 
     raiseBet = (value) => {
@@ -174,16 +176,19 @@ class Game extends Component {
             total += card.blackjackValue;
         }
         this.addCard(drawnCards);
+        this.checkWin();
     }
 
     clearTable = () => {
         this.setState({
+            currentDeck: new Deck(),
             currentPlayerCards: [],
             currentDealerCards: [],
             roundStarted: false,
             playerBusted: false,
             dealerBusted: false,
             playerTurn: true,
+            winner: 0,
         });
     }
 
@@ -194,7 +199,7 @@ class Game extends Component {
                 let newCard = this.state.currentDeck.getCard();
                 this.setState((prevState) => ({
                    currentPlayerCards: prevState.currentPlayerCards.concat(newCard),
-                }), () => ( this.checkPlayerBust(this.state.currentPlayerCards)) );
+                }), () => ( this.checkWin()) );
                 // Callback ^^^
             }
             
@@ -203,7 +208,7 @@ class Game extends Component {
             for (let i = 0; i < amount; i++) {
                 this.setState((prevState) => ({
                     currentDealerCards: prevState.currentDealerCards.concat( prevState.currentDeck.getCard())
-                }), () => ( this.checkDealerBust(this.state.currentDealerCards)) );  
+                }), () => ( this.checkWin()) );  
                 // Callback ^^^
             }
         }
@@ -214,7 +219,7 @@ class Game extends Component {
     addCard(card) {
         this.setState((prevState) => ({
             currentDealerCards: prevState.currentDealerCards.concat(card),
-         }), () => ( this.checkDealerBust(this.state.currentDealerCards)) );
+         }), () => ( this.checkWin()) );
     }
 
     // Helper function
@@ -224,10 +229,7 @@ class Game extends Component {
             total += this.state.currentPlayerCards[i].blackjackValue;
         }
         if(total > 21){
-            this.setState((prevState) => ({
-                playerBusted: true,
-                currentPlayerBalance: prevState.currentPlayerBalance - prevState.currentBet,
-            }));
+            this.setState({playerBusted: true})
         }
     }
 
@@ -238,33 +240,69 @@ class Game extends Component {
             total += this.state.currentDealerCards[i].blackjackValue;
         }
         if(total > 21){
-            this.setState((prevState) => ({
-                dealerBusted: true,
-                currentPlayerBalance: prevState.currentPlayerBalance + prevState.currentBet,
-            }));
+            this.setState({dealerBusted: true})
         }
     }
 
     checkWin() {
-        if(this.state.dealerBusted) {
-            // Do something
+        let pTotal = 0;
+        for (let i = 0; i < this.state.currentPlayerCards.length; i++) {
+            pTotal += this.state.currentPlayerCards[i].blackjackValue;
+        }
+        
+        let dTotal = 0;
+        for (let i = 0; i < this.state.currentDealerCards.length; i++) {
+            dTotal += this.state.currentDealerCards[i].blackjackValue;
+        }
+
+        if(pTotal === 21) {
+            this.setState((prevState) => ({
+                currentPlayerBalance: prevState.currentPlayerBalance + prevState.currentBet,
+                winner: 1,
+            }));
             return;
         }
-        if(this.state.playerBusted) {
-            // Do something
+        if(dTotal === 21) {
+            this.setState((prevState) => ({
+                currentPlayerBalance: prevState.currentPlayerBalance - prevState.currentBet,
+                winner: -1,
+            }));
+            return;
+        }
+
+        if(pTotal > 21) {
+            this.setState((prevState) => ({
+                playerBusted: true,
+                currentPlayerBalance: prevState.currentPlayerBalance - prevState.currentBet,
+                winner: -1,
+            }));
+            return;
+        }
+        if(dTotal > 21) {
+            this.setState((prevState) => ({
+                dealerBusted: true,
+                currentPlayerBalance: prevState.currentPlayerBalance + prevState.currentBet,
+                winner: 1,
+            }));
             return;
         }
         if(!this.state.playerTurn) {
-            if(this.playerTotal() > this.dealerTotal()) {
-                // Do something
+            if(pTotal > dTotal) {
+                this.setState((prevState) => ({
+                    currentPlayerBalance: prevState.currentPlayerBalance + prevState.currentBet,
+                    winner: 1,
+                }));
                 return;
             }
-            else if(this.playerTotal() < this.dealerTotal()) {
-                // Do something
+            else if(pTotal < dTotal) {
+                this.setState((prevState) => ({
+                    currentPlayerBalance: prevState.currentPlayerBalance - prevState.currentBet,
+                    winner: -1,
+                }));
                 return;
             }
             else {
-                // Tie
+                alert('tie lol');
                 return;
             }
         }
@@ -277,6 +315,10 @@ class Game extends Component {
         let total = 0;
         this.state.currentDealerCards.map( (card) => ( total += card.blackjackValue) )
         return total;
+    }
+
+    dealerConcealedTotal() {
+        return this.state.currentDealerCards.reduce( (total, card, index) => ((index === 0) ? total : total + card.blackjackValue), 0);
     }
 
     // Helper function
@@ -297,7 +339,7 @@ class Game extends Component {
     }
 
     // Helper function
-    displayHandValue() {
+    displayDealerHandValue() {
         if(this.state.dealerBusted) {
             return this.dealerTotal() + ' BUST';
         }
@@ -305,6 +347,12 @@ class Game extends Component {
             return this.dealerTotal() + ' / ' + (this.dealerTotal() + 10);
         }
         else {
+            if(this.state.winner === 0) {
+                if(this.state.currentDealerCards.length === 0) {
+                    return 0;
+                }
+                return this.dealerConcealedTotal();
+            }
             return this.dealerTotal();
         }
     }
@@ -329,10 +377,11 @@ class Game extends Component {
             <TableFelt>
             <DealerSection>
                 {this.state.currentDealerCards.map((card, idx) => (
-                    <Card suit={card.suit} rank={card.rank} revealed={(idx === 0) ? ((this.state.playerBusted || this.state.dealerBusted) ? true : false) : true} key={idx} />
+                    <Card suit={card.suit} rank={card.rank} revealed={(idx === 0) ? ((!this.state.playerTurn) ? true : false) : true} key={idx} />
                 ))}
 
-                <p style={{margin: 0}}>{ this.displayHandValue() } </p>
+                <p style={{margin: 0}}>{ this.displayDealerHandValue() } </p>
+                <p style={{margin: 0}}>{ (this.state.winner === 1 ? 'Player wins' : '') || (this.state.winner === -1 ? 'Dealer wins' : '') }</p>
             </DealerSection>
 
             <div css={betStyle}>
@@ -350,10 +399,10 @@ class Game extends Component {
             </PlayerSection>
 
             <ActionButton onClick={() => (this.dealCards())} css={{ display: (this.state.roundStarted ? 'none' : 'block') }}>Deal</ActionButton>
-            <ActionButton onClick={() => (this.hit())} css={{display: ((this.state.playerBusted || this.state.dealerBusted || !this.state.roundStarted) ? 'none' : 'block')}}>Hit</ActionButton>
-            <ActionButton onClick={() => (this.stand())} css={{display: ((this.state.playerBusted || this.state.dealerBusted || !this.state.roundStarted) ? 'none' : 'block')}}>Stand</ActionButton>
+            <ActionButton onClick={() => (this.hit())} css={{display: (((this.state.winner !== 0) || !this.state.roundStarted) ? 'none' : 'block')}}>Hit</ActionButton>
+            <ActionButton onClick={() => (this.stand())} css={{display: (((this.state.winner !== 0) || !this.state.roundStarted) ? 'none' : 'block')}}>Stand</ActionButton>
             <ActionButton onClick={() => (this.resetBet())} css={{ display: (this.state.roundStarted ? 'none' : 'block') }} >Reset Bet</ActionButton>
-            <ActionButton onClick={() => (this.clearTable()) } css={{ display: ((this.state.playerBusted || this.state.dealerBusted) ? 'block' : 'none') }}>New Round</ActionButton>
+            <ActionButton onClick={() => (this.clearTable()) } css={{ display: ((this.state.playerBusted || this.state.dealerBusted || (this.state.winner !== 0)) ? 'block' : 'none') }}>New Round</ActionButton>
 
             <ChipTracker>
                 <Chip onClick={() => (this.raiseBet(1))} color={'gray'}>$1</Chip>
