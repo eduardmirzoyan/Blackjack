@@ -101,110 +101,11 @@ const BetPool = styled.div({
     lineHeight: '115px',
 
     display: 'inline-block',
-    // verticalAlign: 'middle',
-    // position: 'absolute',
-    // top: 50,
-    // left: 'calc(50% + 100px)',
 });
 
 const betStyle = {
     textAlign: 'center',
 };
-
-const Table = (props) => {
-
-
-    function dealerTotal() {
-        let total = 0;
-        props.dealerCards.map( (card) => ( total += card.blackjackValue) )
-        return total;
-    }
-
-    function playerTotal() {
-        let total = 0;
-        props.playerCards.map( (card) => ( total += card.blackjackValue) )
-        return total;
-    }
-
-    function hasAce(array) {
-        for (let i = 0; i < array.length; i++) {
-            if(array[i].rank === 1 ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function displayHandValue() {
-        if(props.dealerBusted) {
-            return dealerTotal() + ' BUST';
-        }
-        if(hasAce(props.dealerCards)) {
-            return dealerTotal() + ' / ' + (dealerTotal() + 10);
-        }
-        else {
-            return dealerTotal();
-        }
-    }
-
-    function displayPlayerHandValue() {
-        if(props.playerBusted) {
-            return playerTotal() + ' BUST';
-        }
-        if(hasAce(props.playerCards)) {
-            return playerTotal() + ' / ' + (playerTotal() + 10);
-        }
-        else {
-            return playerTotal();
-        }
-    }
-
-    return (
-        <TableFelt>
-            <DealerSection>
-                {props.dealerCards.map((card, idx) => (
-                    <Card suit={card.suit} rank={card.rank} revealed={(idx === 0) ? ((props.playerBusted || props.dealerBusted) ? true : false) : true} key={idx} />
-                ))}
-
-                <p style={{margin: 0}}>{ displayHandValue() } </p>
-            </DealerSection>
-
-            <div css={betStyle}>
-                <BetPool> 
-                    ${props.currentBet}
-                </BetPool>
-            </div>
-            
-            <PlayerSection>
-                {props.playerCards.map( (card, idx) => (
-                    <Card suit={card.suit} rank={card.rank} revealed={true} key={idx} />
-                ))}
-
-                <p style={{margin: 0}}>{ displayPlayerHandValue() }</p>
-            </PlayerSection>
-
-            <ActionButton onClick={props.dealCards} css={{ display: (props.roundStarted ? 'none' : 'block') }}>Deal</ActionButton>
-            <ActionButton onClick={props.hit} disabled={props.playerBusted || props.dealerBusted}>Hit</ActionButton>
-            <ActionButton onClick={props.stand} disabled={(props.dealerBusted ? true : false)}>Stand</ActionButton>
-            <ActionButton onClick={props.resetBet} css={{ display: (props.roundStarted ? 'none' : 'block') }} >Reset Bet</ActionButton>
-            <ActionButton onClick={props.clearTable}>New Round</ActionButton>
-
-            <ChipTracker>
-                <Chip onClick={() => (props.raiseBet(1))} color={'gray'}>$1</Chip>
-                <Chip onClick={() => (props.raiseBet(5))} color={'red'}>$5</Chip>
-                <Chip onClick={() => (props.raiseBet(10))} color={'blue'}>$10</Chip>
-                <Chip onClick={() => (props.raiseBet(25))} color={'green'}>$25</Chip>
-                <Chip onClick={() => (props.raiseBet(100))} color={'black'}>$100</Chip>
-            </ChipTracker>
-
-            <PlayerBalance>
-                ${props.balance}
-            </PlayerBalance>
-            
-        </TableFelt>
-    );
-}
-
 
 class Game extends Component {
     
@@ -213,11 +114,7 @@ class Game extends Component {
         currentDeck: new Deck(),
         currentPlayerCards: [],
         currentDealerCards: [],
-        //playerHandValue: 0,
-        //dealerHandValue: 0,
-
         currentPlayerBalance: 1000,
-
         roundStarted: false,
         playerTurn: true,
         playerBusted: false,
@@ -247,8 +144,8 @@ class Game extends Component {
             this.setState({
                 roundStarted: true,
             });
-            this.addCard('p', 2);
-            this.addCard('h', 2);
+            this.drawCard('p', 2);
+            this.drawCard('d', 2);
     
             if(this.state.currentDeck.getSize() <= 10) {
                 this.setState({
@@ -262,27 +159,21 @@ class Game extends Component {
     };
 
     hit = () => {
-        this.addCard('p', 1);
+        this.drawCard('p', 1);
     }
 
     stand = () => {
-        this.setState({
-            playerTurn: false,
-        })
+        this.setState({playerTurn: false});
 
-        let total = 0;
-        for (let i = 0; i < this.state.currentDealerCards.length; i++) {
-            total += this.state.currentDealerCards[i].blackjackValue;
-        }
+        let total = this.dealerTotal();
 
         let drawnCards = [];
-        while(!this.state.playerTurn && total < 17) {
+        while(total < 17) {
             let card = this.state.currentDeck.getCard();
             drawnCards = drawnCards.concat(card);
             total += card.blackjackValue;
         }
-        this.drawCard(drawnCards);
-
+        this.addCard(drawnCards);
     }
 
     clearTable = () => {
@@ -292,10 +183,12 @@ class Game extends Component {
             roundStarted: false,
             playerBusted: false,
             dealerBusted: false,
+            playerTurn: true,
         });
     }
 
-    addCard(user, amount) {
+    // Helper function
+    drawCard(user, amount) {
         if(user === 'p') {
             for (let i = 0; i < amount; i++) {
                 let newCard = this.state.currentDeck.getCard();
@@ -306,7 +199,7 @@ class Game extends Component {
             }
             
         }
-        if(user === 'h'){
+        if(user === 'd'){
             for (let i = 0; i < amount; i++) {
                 this.setState((prevState) => ({
                     currentDealerCards: prevState.currentDealerCards.concat( prevState.currentDeck.getCard())
@@ -317,16 +210,18 @@ class Game extends Component {
         this.forceUpdate();
     }
 
-    drawCard(card) {
+    // Helper function
+    addCard(card) {
         this.setState((prevState) => ({
             currentDealerCards: prevState.currentDealerCards.concat(card),
          }), () => ( this.checkDealerBust(this.state.currentDealerCards)) );
     }
 
-    checkPlayerBust(array) {
+    // Helper function
+    checkPlayerBust() {
         let total = 0;
-        for (let i = 0; i < array.length; i++) {
-            total += array[i].blackjackValue;
+        for (let i = 0; i < this.state.currentPlayerCards.length; i++) {
+            total += this.state.currentPlayerCards[i].blackjackValue;
         }
         if(total > 21){
             this.setState((prevState) => ({
@@ -336,10 +231,11 @@ class Game extends Component {
         }
     }
 
-    checkDealerBust(array) {
+    // Helper function
+    checkDealerBust() {
         let total = 0;
-        for (let i = 0; i < array.length; i++) {
-            total += array[i].blackjackValue;
+        for (let i = 0; i < this.state.currentDealerCards.length; i++) {
+            total += this.state.currentDealerCards[i].blackjackValue;
         }
         if(total > 21){
             this.setState((prevState) => ({
@@ -349,12 +245,129 @@ class Game extends Component {
         }
     }
 
+    checkWin() {
+        if(this.state.dealerBusted) {
+            // Do something
+            return;
+        }
+        if(this.state.playerBusted) {
+            // Do something
+            return;
+        }
+        if(!this.state.playerTurn) {
+            if(this.playerTotal() > this.dealerTotal()) {
+                // Do something
+                return;
+            }
+            else if(this.playerTotal() < this.dealerTotal()) {
+                // Do something
+                return;
+            }
+            else {
+                // Tie
+                return;
+            }
+        }
+    }
+
+    // Game checks
+
+    // Helper function
+    dealerTotal() {
+        let total = 0;
+        this.state.currentDealerCards.map( (card) => ( total += card.blackjackValue) )
+        return total;
+    }
+
+    // Helper function
+    playerTotal() {
+        let total = 0;
+        this.state.currentPlayerCards.map( (card) => ( total += card.blackjackValue) )
+        return total;
+    }
+
+    // Helper function
+    hasAce(array) {
+        for (let i = 0; i < array.length; i++) {
+            if(array[i].rank === 1 ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Helper function
+    displayHandValue() {
+        if(this.state.dealerBusted) {
+            return this.dealerTotal() + ' BUST';
+        }
+        if(this.hasAce(this.state.currentDealerCards)) {
+            return this.dealerTotal() + ' / ' + (this.dealerTotal() + 10);
+        }
+        else {
+            return this.dealerTotal();
+        }
+    }
+
+    // Helper function
+    displayPlayerHandValue() {
+        if(this.state.playerBusted) {
+            return this.playerTotal() + ' BUST';
+        }
+        if(this.hasAce(this.state.currentPlayerCards)) {
+            return this.playerTotal() + ' / ' + (this.playerTotal() + 10);
+        }
+        else {
+            return this.playerTotal();
+        }
+    }
+
     render() {
 
         return (
-            <div>
-                <Table dealerBusted={this.state.dealerBusted} playerBusted={this.state.playerBusted} roundStarted={this.state.roundStarted} balance={this.state.currentPlayerBalance} clearTable={this.clearTable} hit={this.hit} stand={this.stand} dealCards={this.dealCards} currentBet={this.state.currentBet} resetBet={this.resetBet} raiseBet={this.raiseBet} dealerCards={this.state.currentDealerCards} playerCards={this.state.currentPlayerCards} /> 
+
+            <TableFelt>
+            <DealerSection>
+                {this.state.currentDealerCards.map((card, idx) => (
+                    <Card suit={card.suit} rank={card.rank} revealed={(idx === 0) ? ((this.state.playerBusted || this.state.dealerBusted) ? true : false) : true} key={idx} />
+                ))}
+
+                <p style={{margin: 0}}>{ this.displayHandValue() } </p>
+            </DealerSection>
+
+            <div css={betStyle}>
+                <BetPool> 
+                    ${this.state.currentBet}
+                </BetPool>
             </div>
+            
+            <PlayerSection>
+                {this.state.currentPlayerCards.map( (card, idx) => (
+                    <Card suit={card.suit} rank={card.rank} revealed={true} key={idx} />
+                ))}
+
+                <p style={{margin: 0}}>{ this.displayPlayerHandValue() }</p>
+            </PlayerSection>
+
+            <ActionButton onClick={() => (this.dealCards())} css={{ display: (this.state.roundStarted ? 'none' : 'block') }}>Deal</ActionButton>
+            <ActionButton onClick={() => (this.hit())} css={{display: ((this.state.playerBusted || this.state.dealerBusted || !this.state.roundStarted) ? 'none' : 'block')}}>Hit</ActionButton>
+            <ActionButton onClick={() => (this.stand())} css={{display: ((this.state.playerBusted || this.state.dealerBusted || !this.state.roundStarted) ? 'none' : 'block')}}>Stand</ActionButton>
+            <ActionButton onClick={() => (this.resetBet())} css={{ display: (this.state.roundStarted ? 'none' : 'block') }} >Reset Bet</ActionButton>
+            <ActionButton onClick={() => (this.clearTable()) } css={{ display: ((this.state.playerBusted || this.state.dealerBusted) ? 'block' : 'none') }}>New Round</ActionButton>
+
+            <ChipTracker>
+                <Chip onClick={() => (this.raiseBet(1))} color={'gray'}>$1</Chip>
+                <Chip onClick={() => (this.raiseBet(5))} color={'red'}>$5</Chip>
+                <Chip onClick={() => (this.raiseBet(10))} color={'blue'}>$10</Chip>
+                <Chip onClick={() => (this.raiseBet(25))} color={'green'}>$25</Chip>
+                <Chip onClick={() => (this.raiseBet(100))} color={'black'}>$100</Chip>
+            </ChipTracker>
+
+            <PlayerBalance>
+                ${this.state.currentPlayerBalance}
+            </PlayerBalance>
+            
+        </TableFelt>
         );
     }
 }
